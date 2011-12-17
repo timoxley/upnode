@@ -4,8 +4,11 @@ upnode
 Keep a dnode connection alive and re-establish state between reconnects
 with a transactional message queue.
 
-example
-=======
+examples
+========
+
+simple service interruption
+---------------------------
 
 Write a dnode server as usual but enable the upnode ping middleware with
 `server.use(upnode.ping)`.
@@ -82,6 +85,77 @@ time = Fri Dec 16 2011 23:50:20 GMT-0800 (PST)
 time = Fri Dec 16 2011 23:50:21 GMT-0800 (PST)
 time = Fri Dec 16 2011 23:50:22 GMT-0800 (PST)
 ```
+
+authenticated interruption
+--------------------------
+
+Oftentimes you'll want to re-establish state between reconnection attempts.
+
+Suppose we have a simple dnode server with a `beep` function protected behind an
+`auth` function:
+
+server.js:
+
+``` js
+var dnode = require('dnode');
+var upnode = require('upnode');
+
+var server = dnode(function (client, conn) {
+    this.auth = function (user, pass, cb) {
+        if (user === 'moo' && pass === 'hax') {
+            cb(null, {
+                beep : function (fn) { fn('boop at ' + new Date) }
+            });
+        }
+        else cb('ACCESS DENIED')
+    };
+});
+server.use(upnode.ping);
+server.listen(7000);
+```
+
+Now instead of doing `remote.auth()` every time the connection drops, we can
+pass in a callback to `upnode.connect()` that will handle the re-authentication
+and expose the authenticated object to the `up()` transaction:
+
+client.js:
+
+``` js
+var upnode = require('upnode');
+var up = upnode.connect(7000, function (remote, conn) {
+    remote.auth('moo', 'hax', function (err, res) {
+        if (err) console.error(err)
+        else conn.emit('up', res)
+    });
+});
+
+setInterval(function () {
+    up(function (remote) {
+        remote.beep(function (s) {
+            console.log(s);
+        });
+    });
+}, 1000);
+```
+
+Now spin up the client.js and the server.js:
+
+```
+$ node client.js & sleep 2; node server.js
+[1] 10892
+boop at Sat Dec 17 2011 01:30:15 GMT-0800 (PST)
+boop at Sat Dec 17 2011 01:30:15 GMT-0800 (PST)
+boop at Sat Dec 17 2011 01:30:16 GMT-0800 (PST)
+boop at Sat Dec 17 2011 01:30:17 GMT-0800 (PST)
+boop at Sat Dec 17 2011 01:30:18 GMT-0800 (PST)
+```
+
+Kill the server a few times and observe that the client re-authenticates between
+reconnects.
+
+You could do any other sort of stateful operation here besides authentication.
+Just emit the object you want to expose to `up()` through
+`conn.emit('up', obj)`.
 
 methods
 =======
