@@ -3,10 +3,15 @@ var dnode = require('dnode');
 var test = require('tap').test;
 
 test('simple', function (t) {
-    t.plan(5);
+    t.plan(8);
     
     var port = Math.floor(Math.random() * 5e4 + 1e4);
     var up = upnode.connect(port);
+    
+    var counts = { up : 0, down : 0, reconnect : 0 };
+    up.on('up', function () { counts.up ++ });
+    up.on('down', function () { counts.down ++ });
+    up.on('reconnect', function () { counts.reconnect ++ });
     
     var messages = [];
     var iv = setInterval(function () {
@@ -36,6 +41,10 @@ test('simple', function (t) {
         
         t.ok(messages[0] < messages[messages.length-1]);
         t.ok(messages.length > 5);
+        
+        t.equal(counts.up, 2);
+        t.equal(counts.down, 1);
+        t.equal(counts.reconnect, 2);
         
         off();
         up.close();

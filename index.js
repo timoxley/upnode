@@ -47,10 +47,14 @@ function connect (up, cons) {
     }, { args : [], opts : {} });
     
     var args_ = arguments;
-    function reconnect () { connect.apply(null, args_) }
+    function reconnect () {
+        up.emit('reconnect');
+        connect.apply(null, args_);
+    }
     
     var cb = argv.cb || function (remote, conn) {
         conn.emit('up', remote);
+        up.emit('up', remote);
     };
     
     var opts = {
@@ -113,6 +117,7 @@ function connect (up, cons) {
         
         if (alive && !up.closed) setTimeout(reconnect, opts.reconnect);
         if (pinger) clearInterval(pinger);
+        if (alive) up.emit('down');
         alive = false;
     };
     var pinger = null;
