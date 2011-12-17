@@ -9,6 +9,10 @@ var upnode = module.exports = function (cons) {
     up.conn = null;
     up.remote = null;
     up.queue = [];
+    up.close = function () {
+        up.closed = true;
+        up.emit('close');
+    };
     
     var emitter = new EventEmitter;
     Object.keys(EventEmitter.prototype).forEach(function (name) {
@@ -27,6 +31,8 @@ upnode.connect = function () {
 };
 
 function connect (up, cons) {
+    if (up.closed) return;
+    
     var argv = [].slice.call(arguments, 1).reduce(function (acc, arg) {
         if (typeof arg === 'function') acc.cb = arg
         else if (typeof arg === 'object') {
@@ -58,6 +64,10 @@ function connect (up, cons) {
     
     var client = dnode(function (remote, conn) {
         up.conn = conn;
+        
+        up.on('close', function () {
+            conn.end();
+        });
         
         conn.on('up', function (r) {
             up.remote = r;
@@ -101,7 +111,8 @@ function connect (up, cons) {
         up.conn = null;
         stream.destroy();
         
-        if (alive) setTimeout(reconnect, opts.reconnect);
+        if (alive && !up.closed) setTimeout(reconnect, opts.reconnect);
+        if (pinger) clearInterval(pinger);
         alive = false;
     };
     var pinger = null;
