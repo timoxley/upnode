@@ -152,6 +152,11 @@ Create a new transaction from the callback `cb`.
 If the connection is ready, `cb(remote, conn)` will fire immediately.
 Otherwise `cb` will be queued until the connection is available again.
 
+up.close()
+----------
+
+Close the connection and don't attempt to reconnect.
+
 upnode.ping()
 -------------
 
