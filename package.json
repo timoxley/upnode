@@ -1,0 +1,41 @@
+{
+    "name" : "upnode",
+    "description" : "transactional connection queue for dnode",
+    "version" : "0.0.0",
+    "repository" : {
+        "type" : "git",
+        "url" : "git://github.com/substack/upnode.git"
+    },
+    "main" : "index.js",
+    "keywords" : [
+        "dnode",
+        "queue",
+        "message",
+        "reconnect",
+        "transaction",
+        "interruption"
+    ],
+    "directories" : {
+        "lib" : ".",
+        "example" : "example",
+        "test" : "test"
+    },
+    "scripts" : {
+        "test" : "tap test/*.js"
+    },
+    "dependencies" : {
+        "dnode" : ">=0.9.3 <0.10.0"
+    },
+    "devDependencies" : {
+        "tap" : "0.0.x"
+    },
+    "engines" : {
+        "node" : ">=0.4.0"
+    },
+    "license" : "MIT",
+    "author" : {
+        "name" : "James Halliday",
+        "email" : "mail@substack.net",
+        "url" : "http://substack.net"
+    }
+}
