@@ -75,8 +75,15 @@ function connect (up, cons) {
             else if (opts.ping) {
                 pinger = setInterval(function () {
                     var t0 = Date.now();
+                    var to = opts.timeout && setTimeout(function () {
+                        clearInterval(pinger);
+                        conn.end();
+                        stream.destroy();
+                    }, opts.timeout);
+                    
                     remote.ping(function () {
                         var elapsed = Date.now() - t0;
+                        if (to) clearTimeout(to);
                         up.emit('ping', elapsed);
                     });
                 }, opts.ping);
