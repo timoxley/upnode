@@ -158,3 +158,15 @@ upnode.ping()
 Middleware that sets `this.ping` to `function (cb) { cb() }`.
 
 In your dnode server, do `server.use(upnode.ping)`.
+
+install
+=======
+
+With [npm](http://npmjs.org) do:
+
+    npm install upnode
+
+license
+=======
+
+MIT/X11
