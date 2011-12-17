@@ -82,3 +82,79 @@ time = Fri Dec 16 2011 23:50:20 GMT-0800 (PST)
 time = Fri Dec 16 2011 23:50:21 GMT-0800 (PST)
 time = Fri Dec 16 2011 23:50:22 GMT-0800 (PST)
 ```
+
+methods
+=======
+
+var upnode = require('upnode')
+
+var up = upnode(constructor={}).connect(...)
+--------------------------------------------
+
+Establish a new dnode-style connection with the dnode function or object
+`constructor` and the connection parameters which may contain host strings, port
+numbers, option objects, and a connection callback in any order.
+
+Returns a transaction function `up()` for the connection.
+
+If you give `.connect()` a callback, you *must* emit an `'up', remote` event on
+the `conn` object with the remote object you want to make available to the
+subsequent `up()` transactions.
+
+If you don't pass a callback to `.connect()` this default callback is used:
+
+``` js
+function (remote, conn) {
+    conn.emit('up', remote);
+}
+```
+
+The callback must emit an `'up'` event so that state can be rebuilt between
+connection interruptions. A great use for this behavior is authentication where
+certain functionality is only made available through the callback to a
+`.auth(username, password, cb)` function on the remote. For that case you could
+write a connection callback that looks like:
+
+``` js
+function (remote, conn) {
+    remote.auth(user, pass, function (err, obj) {
+        if (err) console.error(err)
+        else conn.emit('up', obj)
+    });
+}
+```
+
+and your dnode sessions will be re-authenticated between reconnects. The remote
+object handle in `up()` will be the `obj` result provided by the `auth()`
+callback.
+
+Besides being passed directly to dnode's `.connect(...)`, these additional
+option-object arguments are respected:
+
+* ping - Interval in milliseconds to send pings to the remote server.
+    Default 10000. Set to 0 to disable pings.
+* timeout - Time in milliseconds to wait for a ping response before triggering a
+    reconnect. Default 5000.
+* reconnect - Time in milliseconds to wait between reconnection attempts.
+    Default 1000.
+
+var up = upnode.connect(...)
+----------------------------
+
+Shortcut for `upnode({}).connect(...)` like how `dnode.connect(...)` is a
+shortcut for `dnode({}).connect(...)`.
+
+up(cb)
+------
+
+Create a new transaction from the callback `cb`.
+
+If the connection is ready, `cb(remote, conn)` will fire immediately.
+Otherwise `cb` will be queued until the connection is available again.
+
+upnode.ping()
+-------------
+
+Middleware that sets `this.ping` to `function (cb) { cb() }`.
+
+In your dnode server, do `server.use(upnode.ping)`.

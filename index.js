@@ -49,7 +49,7 @@ function connect (up, cons) {
     
     var opts = {
         ping : argv.opts.ping === undefined
-            ? 15000 : argv.opts.ping,
+            ? 10000 : argv.opts.ping,
         timeout : argv.opts.timeout === undefined
             ? 5000 : argv.opts.timeout,
         reconnect : argv.opts.reconnect === undefined
