@@ -221,13 +221,23 @@ var up = upnode.connect(...)
 Shortcut for `upnode({}).connect(...)` like how `dnode.connect(...)` is a
 shortcut for `dnode({}).connect(...)`.
 
-up(cb)
-------
+up(timeout=0, cb)
+-----------------
 
 Create a new transaction from the callback `cb`.
 
 If the connection is ready, `cb(remote, conn)` will fire immediately.
 Otherwise `cb` will be queued until the connection is available again.
+
+If `timeout` is specified, fire `cb()` after `timeout` milliseconds with no
+arguments. Here's an example of using timeouts:
+
+``` js
+up(5000, function (remote) {
+    if (!remote) console.error('resource timed out')
+    else remote.beep()
+})
+```
 
 up.close()
 ----------
