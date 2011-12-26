@@ -54,7 +54,6 @@ function connect (up, cons) {
     
     var cb = argv.cb || function (remote, conn) {
         conn.emit('up', remote);
-        up.emit('up', remote);
     };
     
     var opts = {
@@ -73,10 +72,11 @@ function connect (up, cons) {
             conn.end();
         });
         
-        conn.on('up', function (r) {
+        conn.once('up', function (r) {
             up.remote = r;
             up.queue.forEach(function (fn) { fn(up.remote, up.conn) });
             up.queue = [];
+            up.emit('up', r);
         });
         
         conn.on('ready', function () {
@@ -117,25 +117,31 @@ function connect (up, cons) {
         
         if (alive && !up.closed) setTimeout(reconnect, opts.reconnect);
         if (pinger) clearInterval(pinger);
-        if (alive) up.emit('down');
         alive = false;
     };
     var pinger = null;
     
     client.connect.apply(client, argv.args.concat(function (remote, conn) {
-        up.conn = conn;
-        conn.on('up', function (r) {
-            up.remote = r;
+        conn.once('end', function () {
+            up.emit('down');
         });
+        
+        up.conn = conn;
+        up.emit('remote', remote);
+        
         cb.call(this, remote, conn);
     }));
     
     var stream = client.streams[0];
-    stream.on('error', onend);
+    stream.on('error', function () {
+        if (up.conn) onend()
+    });
     stream.on('end', onend);
     stream.on('close', onend);
     
-    client.on('error', onend);
+    client.on('error', function () {
+        if (up.conn) onend()
+    });
     
     return up;
 }

@@ -12,7 +12,7 @@ test('simple', function (t) {
     up.on('up', function () { counts.up ++ });
     up.on('down', function () { counts.down ++ });
     up.on('reconnect', function () { counts.reconnect ++ });
-    
+
     var messages = [];
     var iv = setInterval(function () {
         up(function (remote) {
@@ -22,14 +22,18 @@ test('simple', function (t) {
         });
     }, 250);
     
-    setTimeout(on, 500);
-    setTimeout(function () {
-        off();
-    }, 1000);
-    setTimeout(function () {
-        on();
-    }, 2000);
-    setTimeout(function () {
+    up.once('reconnect', function () {
+        up.once('up', function () {
+            up.once('down', function () {
+                up.once('up', finish);
+                setTimeout(on, 50);
+            });
+            setTimeout(off, 50);
+        });
+        setTimeout(on, 50);
+    });
+    
+    function finish () {
         var r0 = messages.slice(0,3).reduce(function (acc, x) {
             if (x > acc.max) acc.max = x;
             if (x < acc.min) acc.min = x;
@@ -44,13 +48,13 @@ test('simple', function (t) {
         
         t.equal(counts.up, 2);
         t.equal(counts.down, 1);
-        t.equal(counts.reconnect, 2);
+        t.ok(counts.reconnect >= 2);
         
         off();
         up.close();
         clearInterval(iv);
         t.end();
-    }, 3000);
+    }
     
     var server;
     function on () {
