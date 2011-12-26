@@ -171,6 +171,9 @@ numbers, option objects, and a connection callback in any order.
 
 Returns a transaction function `up()` for the connection.
 
+The `up` object emits `"up"` when the link is established, `"down" when the link
+is severed, and `"reconnect"` for each reconnection attempt.
+
 If you give `.connect()` a callback, you *must* emit an `'up', remote` event on
 the `conn` object with the remote object you want to make available to the
 subsequent `up()` transactions.
