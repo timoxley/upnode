@@ -2,13 +2,31 @@ var dnode = require('dnode');
 var EventEmitter = require('events').EventEmitter;
 
 var upnode = module.exports = function (cons) {
-    var up = function (fn) {
+    var up = function (t, fn) {
+        if (typeof t === 'function') {
+            fn = t;
+            t = 0;
+        }
+        
         if (up.conn) fn(up.remote, up.conn)
+        else if (t) {
+            var f = function () {
+                clearTimeout(to);
+                fn.apply(null, arguments);
+            };
+            var to = setTimeout(function () {
+                var ix = up.queue.indexOf(f);
+                if (ix >= 0) up.queue.splice(ix, 1);
+                fn();
+            }, t);
+            up.queue.push(f);
+        }
         else up.queue.push(fn)
     };
     up.conn = null;
     up.remote = null;
     up.queue = [];
+    
     up.close = function () {
         up.closed = true;
         up.emit('close');
@@ -16,7 +34,10 @@ var upnode = module.exports = function (cons) {
     
     var emitter = new EventEmitter;
     Object.keys(EventEmitter.prototype).forEach(function (name) {
-        up[name] = emitter[name].bind(emitter);
+        if (typeof emitter[name] === 'function') {
+            up[name] = emitter[name].bind(emitter);
+        }
+        else up[name] = emitter[name];
     });
     
     return { connect : connect.bind(null, up, cons) };

@@ -8,25 +8,21 @@ test('timeout', function (t) {
     var port = Math.floor(Math.random() * 5e4 + 1e4);
     var up = upnode.connect(port);
     
-console.log('0');
     up(10, function (remote) {
-console.log('1');
         t.ok(!remote);
         
         on();
         up(1000, function (remote) {
-console.log('2');
             t.ok(remote);
             off();
+            up.close();
             t.end();
         });
     });
     
     var server;
     function on () {
-        server = dnode(function (client, conn) {
-            this.time = function (cb) { cb(Date.now()) };
-        });
+        server = dnode({});
         server.use(upnode.ping);
         server.listen(port);
     }
