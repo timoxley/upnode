@@ -262,9 +262,3 @@ license
 =======
 
 MIT/X11
-
-todo
-====
-
-* timeouts for `up()`
-* reconnection throttling
