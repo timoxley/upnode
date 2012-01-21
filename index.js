@@ -44,7 +44,8 @@ var upnode = module.exports = function (cons) {
 };
 
 upnode.ping = function (client, conn) {
-    if (!this.ping) this.ping = function (cb) { cb() };
+    this.upnode = this.upnode || {}
+    if (!this.upnode.ping) this.upnode.ping = function (cb) { cb() };
 };
 
 upnode.connect = function () {
@@ -101,9 +102,9 @@ function connect (up, cons) {
         });
         
         conn.on('ready', function () {
-            if (opts.ping && typeof remote.ping !== 'function') {
+            if (opts.ping && typeof remote.upnode.ping !== 'function') {
                 up.emit('error', new Error(
-                    'Remote does not implement ping. '
+                    'Remote does not implement upnode.ping. '
                     + 'Add server.use(require(\'upnode\').ping) to the remote.'
                 ));
             }
@@ -116,7 +117,7 @@ function connect (up, cons) {
                         stream.destroy();
                     }, opts.timeout);
                     
-                    remote.ping(function () {
+                    remote.upnode.ping(function () {
                         var elapsed = Date.now() - t0;
                         if (to) clearTimeout(to);
                         up.emit('ping', elapsed);
